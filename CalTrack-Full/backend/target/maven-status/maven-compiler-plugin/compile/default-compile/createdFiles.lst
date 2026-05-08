@@ -1,0 +1,16 @@
+com\caltrack\dto\EntryRequestDTO.class
+com\caltrack\model\Entry$EntryBuilder.class
+com\caltrack\CalTrackApplication.class
+com\caltrack\service\EntryService.class
+com\caltrack\config\MongoConfig$LocalDateToDateConverter.class
+com\caltrack\config\CorsConfig$1.class
+com\caltrack\config\CorsConfig.class
+com\caltrack\config\GlobalExceptionHandler.class
+com\caltrack\config\MongoConfig.class
+com\caltrack\controller\CalTrackController.class
+com\caltrack\config\MongoConfig$LocalDateTimeToDateConverter.class
+com\caltrack\config\MongoConfig$DateToLocalDateConverter.class
+com\caltrack\dto\SummaryResponseDTO.class
+com\caltrack\repository\EntryRepository.class
+com\caltrack\config\MongoConfig$DateToLocalDateTimeConverter.class
+com\caltrack\model\Entry.class
