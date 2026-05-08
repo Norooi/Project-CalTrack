@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CalTrack — Calorie Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0d0f14; --surface:#161920; --card:#1e222e; --border:#2a2f3d;
+      --accent:#f97316; --accent2:#38bdf8; --green:#4ade80; --red:#f87171;
+      --text:#e8eaf0; --muted:#64748b; --radius:14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+    ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+    .logo{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800} .logo span{color:var(--accent)}
+    #serverStatus{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;border:1px solid var(--green);color:var(--green);background:var(--surface)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    main{max-width:1100px;margin:0 auto;padding:32px 24px 60px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:720px){.grid-2{grid-template-columns:1fr} header{padding:14px 18px} main{padding:20px 14px}}
+    .summary-banner{background:linear-gradient(135deg,#1a1f2e,#1e2233);border:1px solid var(--border);border-radius:var(--radius);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+    .summary-item{text-align:center}
+    .summary-item .val{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1}
+    .summary-item .lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+    .val.orange{color:var(--accent)} .val.blue{color:var(--accent2)} .val.green{color:var(--green)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:22px}
+    .section-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .section-title .icon{width:26px;height:26px;background:var(--accent);border-radius:7px;display:grid;place-items:center;font-size:0.8rem}
+    .section-title.blue .icon{background:var(--accent2);color:#0d0f14}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:0.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+    .form-group input,.form-group select{width:100%;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+    .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+    .form-group select option{background:var(--card)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all .18s;width:100%;margin-top:4px}
+    .btn-orange{background:var(--accent);color:#fff} .btn-orange:hover{background:#ea6a0e;transform:translateY(-1px)}
+    .btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:auto;font-size:0.8rem;padding:7px 12px} .btn-ghost:hover{border-color:var(--text);color:var(--text)}
+    .btn-delete{background:transparent;color:var(--red);border:1px solid var(--red);padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .18s} .btn-delete:hover{background:var(--red);color:#fff}
+    .type-toggle{display:flex;gap:8px;margin-bottom:14px}
+    .type-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.83rem;font-weight:600;cursor:pointer;transition:all .18s;text-align:center}
+    .type-btn.active-meal{background:rgba(249,115,22,.15);border-color:var(--accent);color:var(--accent)}
+    .type-btn.active-workout{background:rgba(56,189,248,.15);border-color:var(--accent2);color:var(--accent2)}
+    #calcResult{margin-top:14px;padding:14px;border-radius:10px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);display:none}
+    #calcResult .big{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent)}
+    #calcResult .sub{font-size:0.82rem;color:var(--muted)}
+    #calcResult .det{font-size:0.8rem;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+    .err-box{margin-top:12px;padding:12px 14px;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid var(--red);color:var(--red);font-size:0.82rem;display:none}
+    .date-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+    .date-row label{font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .date-row input[type="date"]{padding:7px 11px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;cursor:pointer}
+    .date-row input[type="date"]:focus{border-color:var(--accent)}
+    .meals-list{display:flex;flex-direction:column;gap:9px;max-height:480px;overflow-y:auto}
+    .meal-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:border-color .2s;animation:fadeIn .3s ease}
+    .meal-row:hover{border-color:var(--accent)}
+    .meal-row.workout{border-left:3px solid var(--accent2)} .meal-row.meal-entry{border-left:3px solid var(--accent)}
+    .meal-info{flex:1;min-width:0}
+    .meal-name{font-weight:600;font-size:0.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .meal-meta{font-size:0.73rem;color:var(--muted);margin-top:2px}
+    .meal-cal{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;white-space:nowrap}
+    .meal-cal.pos{color:var(--accent)} .meal-cal.neg{color:var(--green)}
+    .meal-actions{display:flex;align-items:center;gap:8px}
+    .empty-state{text-align:center;padding:36px 20px;color:var(--muted)}
+    .empty-state .ei{font-size:2.2rem;margin-bottom:8px} .empty-state p{font-size:0.87rem}
+    #toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 18px;font-size:0.85rem;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.4);z-index:9999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;max-width:300px}
+    #toast.show{opacity:1;transform:translateY(0)} #toast.ok{border-color:var(--green);color:var(--green)} #toast.err{border-color:var(--red);color:var(--red)} #toast.info{border-color:var(--accent2);color:var(--accent2)}
+    .header-right{display:flex;align-items:center;gap:12px} .header-date{font-size:0.82rem;color:var(--muted)}
+    .info-badge{display:inline-flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--accent2);background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);border-radius:20px;padding:3px 10px;margin-bottom:10px}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Cal<span>Track</span></div>
+  <div class="header-right">
+    <div class="header-date" id="headerDate"></div>
+    <div id="serverStatus"><span class="dot"></span><span>Ready</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="info-badge">&#9889; Running with in-memory storage &#8212; data resets on page refresh</div>
+
+  <div class="summary-banner">
+    <div class="summary-item"><div class="val orange" id="sumNet">0</div><div class="lbl">Net Calories Today</div></div>
+    <div class="summary-item"><div class="val orange" id="sumConsumed">0</div><div class="lbl">Consumed</div></div>
+    <div class="summary-item"><div class="val green" id="sumBurned">0</div><div class="lbl">Burned</div></div>
+    <div class="summary-item"><div class="val blue" id="sumGoal">Set TDEE below</div><div class="lbl">Daily Goal (TDEE)</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="section-title"><span class="icon">&#129518;</span> Calorie Calculator</div>
+        <div class="form-row">
+          <div class="form-group"><label>Age (years)</label><input type="number" id="age" placeholder="25" min="10" max="120" /></div>
+          <div class="form-group"><label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Weight (kg)</label><input type="number" id="weight" placeholder="70" min="20" max="300" /></div>
+          <div class="form-group"><label>Height (cm)</label><input type="number" id="height" placeholder="175" min="50" max="280" /></div>
+        </div>
+        <div class="form-group">
+          <label>Activity Level</label>
+          <select id="activity">
+            <option value="sedentary">Sedentary (desk job)</option>
+            <option value="light">Lightly Active (1-3 days/week)</option>
+            <option value="moderate" selected>Moderately Active (3-5 days/week)</option>
+            <option value="active">Very Active (6-7 days/week)</option>
+            <option value="very_active">Extremely Active (athlete)</option>
+          </select>
+        </div>
+        <button class="btn btn-orange" onclick="calcTDEE()">Calculate My TDEE</button>
+        <div class="err-box" id="calcError"></div>
+        <div id="calcResult">
+          <div class="big" id="calcTDEEval"></div>
+          <div class="sub">kcal / day (TDEE)</div>
+          <div class="det" id="calcDetail"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="icon">+</span> Log Entry</div>
+        <div class="type-toggle">
+          <button class="type-btn active-meal" id="btnMeal" onclick="setType('MEAL')">Meal</button>
+          <button class="type-btn" id="btnWorkout" onclick="setType('WORKOUT')">Workout</button>
+        </div>
+        <div class="form-group"><label id="nameLabel">Meal Name</label><input type="text" id="mealName" placeholder="e.g. Grilled Chicken Salad" /></div>
+        <div class="form-row">
+          <div class="form-group"><label id="calLabel">Calories</label><input type="number" id="mealCalories" placeholder="350" min="1" /></div>
+          <div class="form-group"><label>Date</label><input type="date" id="mealDate" /></div>
+        </div>
+        <button class="btn btn-orange" id="addBtn" onclick="addEntry()">Add Meal</button>
+        <div class="err-box" id="addError"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="section-title blue"><span class="icon" style="background:var(--accent2);color:#0d0f14;">&#128203;</span> Meal &amp; Workout Log</div>
+        <div class="date-row">
+          <label>Filter:</label>
+          <input type="date" id="filterDate" onchange="renderList()" />
+          <button class="btn btn-ghost" onclick="clearFilter()">Show All</button>
+        </div>
+        <div class="meals-list" id="mealsList">
+          <div class="empty-state"><div class="ei">&#127869;</div><p>Add your first entry!</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  // All entries live here — plain array, no fetch, no API
+  var entries = [];
+  var nextId = 1;
+  var currentType = 'MEAL';
+
+  function todayStr() {
+    var d = new Date();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
+
+  function toast(msg, type, ms) {
+    if (!ms) ms = 3000;
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + (type || 'info');
+    clearTimeout(t._t);
+    t._t = setTimeout(function(){ t.className = ''; }, ms);
+  }
+
+  function showErr(id, msg) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideErr(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  // ── TDEE Calculator ──────────────────────────────────────────────────────
+  function calcTDEE() {
+    var age    = parseInt(document.getElementById('age').value);
+    var gender = document.getElementById('gender').value;
+    var weight = parseFloat(document.getElementById('weight').value);
+    var height = parseFloat(document.getElementById('height').value);
+    var activity = document.getElementById('activity').value;
+
+    if (!age || !weight || !height) { showErr('calcError','Please fill in age, weight, and height'); return; }
+    if (age<10||age>120)            { showErr('calcError','Age must be between 10 and 120'); return; }
+    if (weight<20||weight>300)      { showErr('calcError','Weight must be between 20 and 300 kg'); return; }
+    if (height<50||height>280)      { showErr('calcError','Height must be between 50 and 280 cm'); return; }
+    hideErr('calcError');
+
+    var bmr = gender === 'male'
+      ? 10*weight + 6.25*height - 5*age + 5
+      : 10*weight + 6.25*height - 5*age - 161;
+
+    var mult = {sedentary:1.2, light:1.375, moderate:1.55, active:1.725, very_active:1.9};
+    var tdee = Math.round(bmr * (mult[activity] || 1.55));
+
+    document.getElementById('calcTDEEval').textContent = tdee;
+    document.getElementById('calcDetail').innerHTML =
+      gender + ', ' + age + ' yrs, ' + weight + 'kg, ' + height + 'cm<br>Activity: ' + activity.replace('_',' ');
+    document.getElementById('calcResult').style.display = 'block';
+    document.getElementById('sumGoal').textContent = tdee + ' kcal';
+    toast('TDEE: ' + tdee + ' kcal/day', 'ok');
+  }
+
+  // ── Type toggle ──────────────────────────────────────────────────────────
+  function setType(type) {
+    currentType = type;
+    document.getElementById('btnMeal').className    = 'type-btn' + (type==='MEAL'    ? ' active-meal'    : '');
+    document.getElementById('btnWorkout').className = 'type-btn' + (type==='WORKOUT' ? ' active-workout' : '');
+    document.getElementById('addBtn').textContent   = type==='MEAL' ? 'Add Meal' : 'Add Workout';
+    document.getElementById('nameLabel').textContent= type==='MEAL' ? 'Meal Name' : 'Workout Name';
+    document.getElementById('calLabel').textContent = type==='MEAL' ? 'Calories'  : 'Calories Burned';
+  }
+
+  // ── Add entry ────────────────────────────────────────────────────────────
+  function addEntry() {
+    var name     = document.getElementById('mealName').value.trim();
+    var calories = parseInt(document.getElementById('mealCalories').value);
+    var date     = document.getElementById('mealDate').value;
+
+    if (!name)              { showErr('addError','Please enter a name'); return; }
+    if (!calories||calories<1){ showErr('addError','Please enter valid calories (min 1)'); return; }
+    if (!date)              { showErr('addError','Please select a date'); return; }
+    hideErr('addError');
+
+    entries.push({ id: nextId, name: name, calories: calories, type: currentType, date: date });
+    nextId++;
+
+    document.getElementById('mealName').value     = '';
+    document.getElementById('mealCalories').value = '';
+    document.getElementById('mealDate').value     = todayStr();
+
+    toast((currentType==='MEAL' ? 'Meal' : 'Workout') + ' added!', 'ok');
+    renderList();
+    updateSummary();
+  }
+
+  // ── Delete entry ─────────────────────────────────────────────────────────
+  function deleteEntry(id) {
+    var idx = -1;
+    for (var i = 0; i < entries.length; i++) {
+      if (entries[i].id === id) { idx = i; break; }
+    }
+    if (idx === -1) { toast('Entry not found', 'err'); return; }
+    entries.splice(idx, 1);
+    toast('Entry deleted', 'ok');
+    renderList();
+    updateSummary();
+  }
+
+  // ── Render list ──────────────────────────────────────────────────────────
+  function renderList() {
+    var filterDate = document.getElementById('filterDate').value;
+    var list = [];
+    for (var i = entries.length - 1; i >= 0; i--) {
+      if (!filterDate || entries[i].date === filterDate) {
+        list.push(entries[i]);
+      }
+    }
+
+    var el = document.getElementById('mealsList');
+    if (list.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="ei">&#127869;</div><p>No entries found!</p></div>';
+      return;
+    }
+
+    var html = '';
+    for (var j = 0; j < list.length; j++) {
+      var e = list[j];
+      var isWorkout = e.type === 'WORKOUT';
+      html += '<div class="meal-row ' + (isWorkout ? 'workout' : 'meal-entry') + '">'
+        + '<div class="meal-info">'
+        + '<div class="meal-name">' + escHtml(e.name) + '</div>'
+        + '<div class="meal-meta">' + e.date + ' &bull; ' + (isWorkout ? 'Workout' : 'Meal') + '</div>'
+        + '</div>'
+        + '<div class="meal-cal ' + (isWorkout ? 'neg' : 'pos') + '">'
+        + (isWorkout ? '-' : '+') + e.calories + ' kcal'
+        + '</div>'
+        + '<div class="meal-actions">'
+        + '<button class="btn-delete" onclick="deleteEntry(' + e.id + ')">Delete</button>'
+        + '</div>'
+        + '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  // ── Update summary ───────────────────────────────────────────────────────
+  function updateSummary() {
+    var today = todayStr();
+    var consumed = 0, burned = 0;
+    for (var i = 0; i < entries.length; i++) {
+      if (entries[i].date === today) {
+        if (entries[i].type === 'MEAL')    consumed += entries[i].calories;
+        if (entries[i].type === 'WORKOUT') burned   += entries[i].calories;
+      }
+    }
+    document.getElementById('sumConsumed').textContent = consumed;
+    document.getElementById('sumBurned').textContent   = burned;
+    document.getElementById('sumNet').textContent      = consumed - burned;
+  }
+
+  // ── Filter ───────────────────────────────────────────────────────────────
+  function clearFilter() {
+    document.getElementById('filterDate').value = '';
+    renderList();
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────
+  document.getElementById('mealDate').value   = todayStr();
+  document.getElementById('filterDate').value = todayStr();
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US',{
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+</script>
+</body>
+</html>
